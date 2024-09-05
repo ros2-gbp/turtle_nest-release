@@ -1,3 +1,26 @@
+## turtle_nest (humble) - 1.0.2-1
+
+The packages in the `turtle_nest` repository were released into the `humble` distro by running `/usr/bin/bloom-release --rosdistro humble turtle_nest` on `Thu, 05 Sep 2024 13:18:06 -0000`
+
+The `turtle_nest` package was released.
+
+Version of package(s) in repository `turtle_nest`:
+
+- upstream repository: https://github.com/Jannkar/turtle_nest.git
+- release repository: https://github.com/ros2-gbp/turtle_nest-release.git
+- rosdistro version: `1.0.1-1`
+- old version: `1.0.1-1`
+- new version: `1.0.2-1`
+
+Versions of tools used:
+
+- bloom version: `0.12.0`
+- catkin_pkg version: `1.0.0`
+- rosdep version: `0.25.1`
+- rosdistro version: `0.9.1`
+- vcstools version: `0.1.42`
+
+
 ## turtle_nest (iron) - 1.0.2-1
 
 The packages in the `turtle_nest` repository were released into the `iron` distro by running `/usr/bin/bloom-release --rosdistro iron turtle_nest` on `Thu, 05 Sep 2024 13:16:57 -0000`
