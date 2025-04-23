@@ -1,0 +1,22 @@
+ros-kilted-turtle-nest (1.0.2-2noble) noble; urgency=high
+
+  * Add option to create a parameter file (#12 <https://github.com/Jannkar/turtle_nest/issues/12>)
+  * Contributors: Janne Karttunen
+
+ -- Janne Karttunen <janne.a.karttunen@gmail.com>  Thu, 05 Sep 2024 05:00:00 -0000
+
+ros-kilted-turtle-nest (1.0.1-2noble) noble; urgency=high
+
+  * applied uncrustify for consistent code formatting
+  * Contributors: Janne Karttunen
+
+ -- Janne Karttunen <janne.a.karttunen@gmail.com>  Fri, 30 Aug 2024 05:00:00 -0000
+
+ros-kilted-turtle-nest (1.0.0-2noble) noble; urgency=high
+
+  * first public release
+  * Contributors: Janne Karttunen
+
+ -- Janne Karttunen <janne.a.karttunen@gmail.com>  Fri, 23 Aug 2024 05:00:00 -0000
+
+
