@@ -2,21 +2,28 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>turtle_nest</name>
-  <version>1.0.3</version>
+  <version>1.1.0</version>
   <description>ROS 2 Package Creator</description>
   <maintainer email="janne.a.karttunen@gmail.com">Janne Karttunen</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>tinyxml2_vendor</depend>
+  <depend>python3-dev</depend>
+  <depend>pybind11-dev</depend>
+
   <build_depend>libqt5-core</build_depend>
   <build_depend>libqt5-widgets</build_depend>
   <build_depend>qtbase5-dev</build_depend>
+  <build_depend>libqt5-svg-dev</build_depend>
 
+  <build_depend>black</build_depend>
   <exec_depend>libqt5-core</exec_depend>
   <exec_depend>libqt5-gui</exec_depend>
   <exec_depend>libqt5-opengl</exec_depend>
   <exec_depend>libqt5-widgets</exec_depend>
+  <exec_depend>libqt5-svg-dev</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

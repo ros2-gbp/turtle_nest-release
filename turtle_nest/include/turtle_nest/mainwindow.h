@@ -18,9 +18,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "turtle_nest/build_type_enum.h"
 #include <QMainWindow>
 #include <QString>
 #include <QToolButton>
+#include <QDialog>
+#include <QButtonGroup>
 
 
 QT_BEGIN_NAMESPACE
@@ -32,13 +35,14 @@ QT_END_NAMESPACE
 
 void show_tooltip(QToolButton * button);
 
-class MainWindow: public QMainWindow
+class MainWindow: public QDialog
 {
   Q_OBJECT
 
 public:
-  MainWindow(QWidget * parent = nullptr);
+  MainWindow(QWidget * parent = nullptr, const QString & package_dest = "");
   ~MainWindow();
+  QString get_created_package_name();
 
 // Uncrustify wants to indent private slots after Jazzy distro, but not before Humble,
 // leading to a conflict. Skip.
@@ -59,11 +63,11 @@ public:
 
   void on_checkboxCreateLaunch_toggled(bool checked);
 
-  void change_package_type();
+  void handle_package_type_changed(int id, bool checked);
 
-  void on_checkboxCpp_clicked();
+  BuildType get_selected_package_type();
 
-  void on_checkboxPython_clicked();
+  void update_package_type_page_ui(BuildType package_type);
 
   void on_lineEditNodeNameCpp_textEdited(const QString & arg1);
 
@@ -97,6 +101,8 @@ public:
 
 private:
   Ui::MainWindow * ui;
+  QString package_destination;
+  QButtonGroup * package_type_group;
 };
 
 #endif // MAINWINDOW_H
