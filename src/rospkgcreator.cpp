@@ -20,6 +20,7 @@
 #include "turtle_nest/generate_cmake.h"
 #include "turtle_nest/generate_launch.h"
 #include "turtle_nest/generate_node.h"
+#include "turtle_nest/generate_msgs_pkg.h"
 #include "turtle_nest/generate_params.h"
 #include "turtle_nest/generate_setup_py.h"
 #include "turtle_nest/string_tools.h"
@@ -41,16 +42,19 @@ void RosPkgCreator::create_package() const
 
   // Overwrite the simple hello world nodes with more advanced ones
   if (!node_name_python.isEmpty()) {
-    generate_python_node(workspace_path, package_name, node_name_python, create_config);
+    generate_python_node(package_path, package_name, node_name_python, create_config, true);
   }
   if (!node_name_cpp.isEmpty()) {
-    generate_cpp_node(package_path, node_name_cpp, create_config);
+    generate_cpp_node(package_path, node_name_cpp, create_config, true);
   }
 
-  // Create Python init file if creating CPP and Python package
+  // If creating CPP and Python package, add the Python node to CMakeLists.txt
   if (build_type == CPP_AND_PYTHON) {
-    QString node_dir = QDir(package_path).filePath(package_name);
-    create_init_file(node_dir);
+    create_init_file(package_path, package_name);
+    install_python_modules_in_cmakelists(package_path);
+    if (!node_name_python.isEmpty()) {
+      add_python_node_to_cmakelists(package_path, node_name_python);
+    }
   }
 
   // Generate launch file
@@ -68,8 +72,13 @@ void RosPkgCreator::create_package() const
   // Modify setup.py or CMakeLists
   if (build_type == PYTHON) {
     modify_setup_py(package_path, create_launch, create_config);
+  } else if (build_type == CPP || build_type == CPP_AND_PYTHON) {
+    modify_cmake_file(package_path, create_launch, create_config);
+  } else if (build_type == MSGS) {
+    create_msgs_files(package_path);
+    add_msgs_to_cmakelists(package_path);
   } else {
-    modify_cmake_file(package_path, create_launch, create_config, node_name_python);
+    throw std::runtime_error("Unknown package type.");
   }
 
   // Add watermark
@@ -81,15 +90,27 @@ void RosPkgCreator::create_package() const
   } else {
     qDebug() << "Failed to open the package.xml for appending watermark.";
   }
-
 }
 
 QStringList RosPkgCreator::create_command() const
 {
   QStringList command_list;
-  QString type = "ament_cmake";
-  if (build_type == PYTHON) {
-    type = "ament_python";
+  QString type;
+  switch (build_type) {
+    case CPP:
+      type = "ament_cmake";
+      break;
+    case PYTHON:
+      type = "ament_python";
+      break;
+    case CPP_AND_PYTHON:
+      type = "ament_cmake";
+      break;
+    case MSGS:
+      type = "ament_cmake";
+      break;
+    default:
+      throw std::logic_error("Package creation not implemented for this package type.");
   }
 
   command_list
@@ -108,11 +129,11 @@ QStringList RosPkgCreator::create_command() const
   // in the command. Otherwise crashes, so seems to be a bug. Having maintainer-email
   // as the last thing because of this.
   if (!node_name_cpp.isEmpty() && !node_name_python.isEmpty()) {
-    command_list << "--dependencies" << "rclcpp" << "rclpy" << "std_msgs";
+    command_list << "--dependencies" << "rclcpp" << "rclpy";
   } else if (!node_name_cpp.isEmpty()) {
-    command_list << "--dependencies" << "rclcpp" << "std_msgs";
+    command_list << "--dependencies" << "rclcpp";
   } else if (!node_name_python.isEmpty()) {
-    command_list << "--dependencies" << "rclpy" << "std_msgs";
+    command_list << "--dependencies" << "rclpy";
   }
 
   // Set Node name
@@ -150,19 +171,29 @@ void RosPkgCreator::run_command(QStringList command) const
 void RosPkgCreator::build_package() const
 {
   QDir dir(workspace_path);
-  dir.cdUp();    // Get the path without /src extension to build in that location
+  dir.cdUp();      // Get the path without /src extension to build in that location
+  colcon_build(dir.path(), {package_name});
+}
 
+void colcon_build(QString workspace_path, QStringList packages)
+{
+  QDir dir(workspace_path);
   QProcess builder;
   builder.setProcessChannelMode(QProcess::MergedChannels);
   builder.setWorkingDirectory(dir.path());
 
   QStringList command_list;
-  command_list << "build" << "--packages-select" << package_name;
+  if (packages.isEmpty()) {
+    command_list << "build";
+  } else {
+    command_list << "build" << "--packages-select";
+    command_list.append(packages);
+  }
 
   builder.start("colcon", command_list);
   qInfo().noquote() << "Running command: colcon" << builder.arguments().join(" ");
 
-  if (!builder.waitForFinished()) {
+  if (!builder.waitForFinished(120000)) {
     throw std::runtime_error("Failed to build the package");
   }
   if (builder.exitCode() != 0) {
