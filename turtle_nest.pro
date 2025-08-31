@@ -14,12 +14,15 @@ SOURCES += \
     src/generate_cmake.cpp \
     src/generate_launch.cpp \
     src/generate_msgs_pkg.cpp \
-    src/generate_node.cpp \
     src/generate_params.cpp \
     src/generate_setup_py.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
     src/modify_existing_pkg.cpp \
+    src/package_generators/cpp_package_generator.cpp \
+    src/package_generators/mixed_cpp_python_package_generator.cpp \
+    src/package_generators/package_generator_factory.cpp \
+    src/package_generators/python_package_generator.cpp \
     src/package_xml_tools.cpp \
     src/packageinfoform.cpp \
     src/packageswindow.cpp \
@@ -32,11 +35,15 @@ HEADERS += \
     include/turtle_nest/generate_cmake.h \
     include/turtle_nest/generate_launch.h \
     include/turtle_nest/generate_msgs_pkg.h \
-    include/turtle_nest/generate_node.h \
     include/turtle_nest/generate_setup_py.h \
     include/turtle_nest/mainwindow.h \
     include/turtle_nest/modify_existing_pkg.h \
     include/turtle_nest/node_type_enum.h \
+    include/turtle_nest/package_generators/cpp_package_generator.h \
+    include/turtle_nest/package_generators/base_package_generator.h \
+    include/turtle_nest/package_generators/mixed_cpp_python_package_generator.h \
+    include/turtle_nest/package_generators/package_generator_factory.h \
+    include/turtle_nest/package_generators/python_package_generator.h \
     include/turtle_nest/package_xml_tools.h \
     include/turtle_nest/packageinfo.h \
     include/turtle_nest/rospkgcreator.h \
