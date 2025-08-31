@@ -18,11 +18,53 @@
 #ifndef NODE_TYPE_ENUM_H
 #define NODE_TYPE_ENUM_H
 
+#include <QString>
 
 enum NodeType
 {
   CPP_NODE,
+  CPP_LIFECYCLE_NODE,
+  CPP_COMPOSABLE_NODE,
   PYTHON_NODE,
+  PYTHON_LIFECYCLE_NODE,
 };
+
+struct NodeOptions
+{
+  QString node_name;
+  NodeType node_type;
+  bool add_params;
+};
+
+// Convert NodeType enum to user-readable QString
+inline QString node_type_to_string(NodeType node_type)
+{
+  switch (node_type) {
+    case NodeType::CPP_NODE: return QStringLiteral("C++ Node");
+    case NodeType::CPP_LIFECYCLE_NODE: return QStringLiteral("C++ Lifecycle Node");
+    case NodeType::CPP_COMPOSABLE_NODE: return QStringLiteral("C++ Composable Node");
+    case NodeType::PYTHON_NODE: return QStringLiteral("Python Node");
+    case NodeType::PYTHON_LIFECYCLE_NODE: return QStringLiteral("Python Lifecycle Node");
+    default:
+      throw std::runtime_error(
+        QString("node_type_to_string: Not implemented for enum value %1")
+        .arg(static_cast < int > (node_type))
+        .toStdString());
+  }
+}
+
+// Convert QString back to NodeType enum (case-sensitive)
+inline NodeType node_type_from_string(const QString & s)
+{
+  if (s == QStringLiteral("C++ Node")) {return NodeType::CPP_NODE;}
+  if (s == QStringLiteral("C++ Lifecycle Node")) {return NodeType::CPP_LIFECYCLE_NODE;}
+  if (s == QStringLiteral("C++ Composable Node")) {return NodeType::CPP_COMPOSABLE_NODE;}
+  if (s == QStringLiteral("Python Node")) {return NodeType::PYTHON_NODE;}
+  if (s == QStringLiteral("Python Lifecycle Node")) {return NodeType::PYTHON_LIFECYCLE_NODE;}
+  throw std::runtime_error(
+    QString("node_type_from_string: Not implemented for string value value %1")
+    .arg(s)
+    .toStdString());
+}
 
 #endif // NODE_TYPE_ENUM_H
