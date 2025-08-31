@@ -17,6 +17,8 @@
 
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+#include <turtle_nest/package_generators/base_package_generator.h>
+#include "turtle_nest/package_generators/package_generator_factory.h"
 #include "turtle_nest/rospkgcreator.h"
 #include "turtle_nest/file_utils.h"
 #include "test_utils.h"
@@ -35,10 +37,12 @@
 using namespace testing;
 
 
-const QString python_node_text = "[python_node]: Hello world from the Python node python_node";
-const QString python_param_text = "[python_node]: Declared parameter 'example_param'. Value: abc";
-const QString cpp_node_text = "[cpp_node]: Hello world from the C++ node cpp_node";
-const QString cpp_param_text = "[cpp_node]: Declared parameter 'example_param'. Value: abc";
+const QString python_node_text = "Hello world from the Python node python_node";
+const QString python_lifecycle_node_text = "Hello world from the Python node python_lifecycle_node";
+const QString cpp_node_text = "Hello world from the C++ node cpp_node";
+const QString cpp_lifecycle_node_text = "Hello world from the C++ node cpp_lifecycle_node";
+const QString param_text = "Declared parameter 'example_param'. Value: abc";
+const QString default_param_text = "Declared parameter 'example_param'. Value: default_value";
 
 
 // Test the package creation with default parameters
@@ -59,8 +63,8 @@ TEST(ros_pkg_creator, create_pkg_all_values) {
   pkg_creator.description = "multi-line test \n description";
   pkg_creator.maintainer_name = "Test Maintainer";
   pkg_creator.maintainer_email = "maintainer@admin.com";
-  pkg_creator.node_name_cpp = "cpp_node";
-  pkg_creator.node_name_python = "python_node";
+  pkg_creator.node_name = "cpp_node";
+  pkg_creator.node_type = NodeType::CPP_NODE;
   pkg_creator.launch_name = "demo_launch";
   pkg_creator.license = "Apache-2.0";
   pkg_creator.create_package();
@@ -68,8 +72,6 @@ TEST(ros_pkg_creator, create_pkg_all_values) {
 
   ASSERT_TRUE(file_exists(package_path + "/CMakeLists.txt"));
   ASSERT_TRUE(file_exists(package_path + "/launch/demo_launch.py"));
-  ASSERT_TRUE(file_exists(package_path + "/package_name/python_node.py"));
-  ASSERT_TRUE(file_exists(package_path + "/package_name/__init__.py"));
   ASSERT_TRUE(file_exists(package_path + "/src/cpp_node.cpp"));
   ASSERT_TRUE(string_exists_in_file((package_path + "/LICENSE"), "Apache License"));
   ASSERT_EQ("Test Maintainer", read_xml_tag(xml_path, "maintainer"));
@@ -77,8 +79,7 @@ TEST(ros_pkg_creator, create_pkg_all_values) {
   ASSERT_EQ("maintainer@admin.com", read_xml_tag(xml_path, "maintainer", "email"));
 
   QString output = run_command("ros2 launch package_name demo_launch.py",
-    {python_node_text, cpp_node_text}, pkg_creator.workspace_path);
-  ASSERT_TRUE(output.contains(python_node_text));
+    {cpp_node_text}, pkg_creator.workspace_path);
   ASSERT_TRUE(output.contains(cpp_node_text));
 }
 
@@ -101,7 +102,8 @@ TEST(ros_pkg_creator, cpp_no_node) {
 // Create a C++ package with a Node
 TEST(ros_pkg_creator, cpp_with_node) {
   RosPkgCreator pkg_creator(get_tmp_workspace_path(), "package_name", CPP);
-  pkg_creator.node_name_cpp = "cpp_node";
+  pkg_creator.node_name = "cpp_node";
+  pkg_creator.node_type = NodeType::CPP_NODE;
   pkg_creator.launch_name = "test_launch";
   pkg_creator.create_package();
   pkg_creator.build_package();
@@ -110,6 +112,27 @@ TEST(ros_pkg_creator, cpp_with_node) {
   QString output = run_command("ros2 launch package_name test_launch.py", {cpp_node_text},
   pkg_creator.workspace_path);
   ASSERT_TRUE(output.contains(cpp_node_text));
+}
+
+// Create a C++ package with a Composable node, including params.
+// Cannot be tested with other node types with ros2 run, as we need launch file
+// to load the node in container.
+TEST(ros_pkg_creator, cpp_composable_node) {
+  RosPkgCreator pkg_creator(get_tmp_workspace_path(), "package_name", CPP);
+  pkg_creator.node_name = "cpp_node";
+  pkg_creator.node_type = NodeType::CPP_COMPOSABLE_NODE;
+  pkg_creator.launch_name = "test_launch";
+  pkg_creator.params_file_name = "test_params";
+  pkg_creator.create_package();
+  pkg_creator.build_package();
+  ASSERT_TRUE(file_exists(pkg_creator.package_path + "/src/cpp_node.cpp"));
+
+  QString container_text = "Loaded node '/cpp_node' in container '/cpp_node_container'";
+  QString output = run_command("ros2 launch package_name test_launch.py", {cpp_node_text, param_text, container_text},
+                               pkg_creator.workspace_path);
+  ASSERT_TRUE(output.contains(cpp_node_text));
+  ASSERT_TRUE(output.contains(param_text));
+  ASSERT_TRUE(output.contains(container_text));
 }
 
 // Create a Python package without a Node
@@ -124,7 +147,8 @@ TEST(ros_pkg_creator, python_no_node) {
 // Create a Python package with a Node
 TEST(ros_pkg_creator, python_with_node) {
   RosPkgCreator pkg_creator(get_tmp_workspace_path(), "package_name", PYTHON);
-  pkg_creator.node_name_python = "python_node";
+  pkg_creator.node_name = "python_node";
+  pkg_creator.node_type = NodeType::PYTHON_NODE;
   pkg_creator.launch_name = "test_launch";
   pkg_creator.create_package();
   pkg_creator.build_package();
@@ -152,7 +176,8 @@ TEST(ros_pkg_creator, cpp_python_no_nodes) {
 // Create a CPP+Python package with CPP Node
 TEST(ros_pkg_creator, cpp_python_with_cpp_node) {
   RosPkgCreator pkg_creator(get_tmp_workspace_path(), "package_name", CPP_AND_PYTHON);
-  pkg_creator.node_name_cpp = "cpp_node";
+  pkg_creator.node_name = "cpp_node";
+  pkg_creator.node_type = NodeType::CPP_NODE;
   pkg_creator.launch_name = "test_launch";
   pkg_creator.create_package();
   pkg_creator.build_package();
@@ -167,7 +192,8 @@ TEST(ros_pkg_creator, cpp_python_with_cpp_node) {
 // Create a CPP+Python package with Python Node
 TEST(ros_pkg_creator, cpp_python_with_python_node) {
   RosPkgCreator pkg_creator(get_tmp_workspace_path(), "package_name", CPP_AND_PYTHON);
-  pkg_creator.node_name_python = "python_node";
+  pkg_creator.node_name = "python_node";
+  pkg_creator.node_type = NodeType::PYTHON_NODE;
   pkg_creator.launch_name = "test_launch";
   pkg_creator.create_package();
   pkg_creator.build_package();
@@ -184,31 +210,6 @@ TEST(ros_pkg_creator, cpp_python_with_python_node) {
   ASSERT_TRUE(output.contains(python_node_text));
 }
 
-
-// Create a CPP+Python package with both Nodes
-TEST(ros_pkg_creator, cpp_python_with_both_nodes) {
-  RosPkgCreator pkg_creator(get_tmp_workspace_path(), "package_name", CPP_AND_PYTHON);
-  pkg_creator.node_name_cpp = "cpp_node";
-  pkg_creator.node_name_python = "python_node";
-  pkg_creator.launch_name = "test_launch";
-  pkg_creator.create_package();
-  pkg_creator.build_package();
-  ASSERT_TRUE(file_exists(pkg_creator.package_path + "/src/cpp_node.cpp"));
-  ASSERT_TRUE(file_exists(pkg_creator.package_path + "/package_name/__init__.py"));
-  ASSERT_TRUE(file_exists(pkg_creator.package_path + "/package_name/python_node.py"));
-  ASSERT_TRUE(string_exists_in_file(
-    (pkg_creator.package_path + "/package_name/python_node.py"),
-      "Hello world from the Python node python_node"
-  ));
-
-  QStringList outputs_to_wait = {python_node_text, cpp_node_text};
-  QString output = run_command(QString("ros2 launch package_name test_launch.py"),
-  outputs_to_wait, pkg_creator.workspace_path);
-  for (const QString & expected : outputs_to_wait) {
-    ASSERT_TRUE(output.contains(expected));
-  }
-}
-
 // Create MSGS package
 TEST(ros_pkg_creator, msgs_package){
   QString tmp_path = get_tmp_workspace_path();
@@ -218,7 +219,8 @@ TEST(ros_pkg_creator, msgs_package){
 
   // Create a Python package with a node that imports the new msgs package
   RosPkgCreator python_pkg_creator(tmp_path, "python_package", PYTHON);
-  python_pkg_creator.node_name_python = "custom_message_import";
+  python_pkg_creator.node_name = "custom_message_import";
+  python_pkg_creator.node_type = NodeType::PYTHON_NODE;
   python_pkg_creator.launch_name = "custom_message_import_launch";
   python_pkg_creator.create_package();
   QString node_path = QDir(python_pkg_creator.package_path).filePath("python_package/custom_message_import.py");
@@ -248,8 +250,7 @@ TEST(ros_pkg_creator, test_params_with_no_nodes_cpp) {
   QString output = run_command(QString("ros2 launch test_package test_launch.py"),
     {"[INFO] [launch]:"}, pkg_creator.workspace_path);
 
-  ASSERT_TRUE(!output.contains(python_param_text));
-  ASSERT_TRUE(!output.contains(cpp_param_text));
+  ASSERT_TRUE(!output.contains(param_text));
 
   QString params_path = QString(pkg_creator.package_path + "/config/test_params.yaml");
   ASSERT_TRUE(file_exists(params_path));
@@ -270,8 +271,7 @@ TEST(ros_pkg_creator, test_params_with_no_nodes_python) {
   QString output = run_command(QString("ros2 launch test_package test_launch.py"),
     {"[INFO] [launch]:"}, pkg_creator.workspace_path);
 
-  ASSERT_TRUE(!output.contains(python_param_text));
-  ASSERT_TRUE(!output.contains(cpp_param_text));
+  ASSERT_TRUE(!output.contains(param_text));
 
   QString params_path = QString(pkg_creator.package_path + "/config/test_params.yaml");
   ASSERT_TRUE(file_exists(params_path));
@@ -281,68 +281,64 @@ TEST(ros_pkg_creator, test_params_with_no_nodes_python) {
   "(os.path.join('share', package_name, 'config'), glob('config/*.yaml')),"));
 }
 
-// Test the params file creation with both Python Package and Node
-TEST(ros_pkg_creator, test_params_with_python_node) {
-  RosPkgCreator pkg_creator(get_tmp_workspace_path(), "test_package", PYTHON);
-  pkg_creator.node_name_python = "python_node";
-  pkg_creator.launch_name = "test_launch";
-  pkg_creator.params_file_name = "test_params";
+// Test the params file creation for all the Node types
+TEST(ros_pkg_creator, test_node_params_creation){
+  struct TestCase
+  {
+    NodeType node_type;
+    QString node_name;
+    QStringList outputs_to_wait;
+  };
+
+  QList<TestCase> test_cases = {
+    {CPP_NODE, "cpp_node", {cpp_node_text, default_param_text}},
+    {CPP_LIFECYCLE_NODE, "cpp_lifecycle_node", {cpp_lifecycle_node_text, default_param_text}},
+    {PYTHON_NODE, "python_node", {python_node_text, default_param_text}},
+    {PYTHON_LIFECYCLE_NODE, "python_lifecycle_node", {python_lifecycle_node_text, default_param_text}},
+  };
+
+  RosPkgCreator pkg_creator(get_tmp_workspace_path(), "mixed_pkg", CPP_AND_PYTHON);
   pkg_creator.create_package();
-  pkg_creator.build_package();
 
-  QStringList outputs_to_wait = {python_node_text, python_param_text};
-  QString output = run_command(QString("ros2 launch test_package test_launch.py"),
-  outputs_to_wait, pkg_creator.workspace_path);
+  PackageInfo pkg_info;
+  pkg_info.package_name = pkg_creator.package_name;
+  pkg_info.package_path = pkg_creator.package_path;
+  pkg_info.package_type = pkg_creator.build_type;
 
-  for (const QString & expected : outputs_to_wait) {
-    ASSERT_TRUE(output.contains(expected));
+  std::unique_ptr<BasePackageGenerator> package_generator = create_package_generator(pkg_info.package_type);
+
+  for (const auto & test_case : test_cases) {
+    package_generator->add_node(
+      {test_case.node_name, test_case.node_type, true},
+      pkg_info.package_path,
+      pkg_info.package_name);
   }
-
-  ASSERT_TRUE(!output.contains(cpp_node_text));
-  ASSERT_TRUE(!output.contains(cpp_param_text));
-}
-
-
-// Test the params file creation with both CPP and Python Nodes
-TEST(ros_pkg_creator, test_params_with_both_nodes) {
-  RosPkgCreator pkg_creator(get_tmp_workspace_path(), "test_package", CPP_AND_PYTHON);
-  pkg_creator.node_name_cpp = "cpp_node";
-  pkg_creator.node_name_python = "python_node";
-  pkg_creator.launch_name = "test_launch";
-  pkg_creator.params_file_name = "test_params";
-  pkg_creator.create_package();
   pkg_creator.build_package();
 
-  QStringList outputs_to_wait = {python_node_text, cpp_node_text, python_param_text,
-  cpp_param_text};
-  QString output = run_command(QString("ros2 launch test_package test_launch.py"),
-  outputs_to_wait, pkg_creator.workspace_path);
+  for (const auto & test_case : test_cases) {
+    QString output = run_command(QString("ros2 run mixed_pkg %1").arg(test_case.node_name),
+                                 test_case.outputs_to_wait, pkg_creator.workspace_path);
 
-  for (const QString & expected : outputs_to_wait) {
-    ASSERT_TRUE(output.contains(expected));
+    for (const QString & expected : test_case.outputs_to_wait) {
+      ASSERT_TRUE(output.contains(expected));
+    }
   }
 }
 
 // Test that the params file is not created and the launch file is correctly populated when params_file_name is empty
 TEST(ros_pkg_creator, test_params_not_set) {
-  RosPkgCreator pkg_creator(get_tmp_workspace_path(), "test_package", CPP_AND_PYTHON);
-  pkg_creator.node_name_cpp = "cpp_node";
-  pkg_creator.node_name_python = "python_node";
+  RosPkgCreator pkg_creator(get_tmp_workspace_path(), "test_package", CPP);
+  pkg_creator.node_name = "cpp_node";
+  pkg_creator.node_type = NodeType::CPP_NODE;
   pkg_creator.launch_name = "test_launch";
   pkg_creator.create_package();
   pkg_creator.build_package();
 
-  QStringList outputs_to_wait = {python_node_text, cpp_node_text};
-
   QString output = run_command(QString("ros2 launch test_package test_launch.py"),
-  outputs_to_wait, pkg_creator.workspace_path);
+  {cpp_node_text}, pkg_creator.workspace_path);
 
-  for (const QString & expected : outputs_to_wait) {
-    ASSERT_TRUE(output.contains(expected));
-  }
-
-  ASSERT_TRUE(!output.contains(python_param_text));
-  ASSERT_TRUE(!output.contains(cpp_param_text));
+  ASSERT_TRUE(output.contains({cpp_node_text}));
+  ASSERT_TRUE(!output.contains(param_text));
 
   QString params_path = QString(pkg_creator.package_path + "/config/test_params.yaml");
   ASSERT_TRUE(!file_exists(params_path));
