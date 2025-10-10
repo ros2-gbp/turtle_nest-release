@@ -1,0 +1,12 @@
+Source: ros-humble-turtle-nest
+Section: misc
+Priority: optional
+Maintainer: Janne Karttunen <janne.a.karttunen@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), libqt5core5a, libqt5svg5-dev, libqt5widgets5, pybind11-dev, python3-dev, qtbase5-dev, ros-humble-ament-cmake, ros-humble-ament-lint-auto <!nocheck>, ros-humble-ament-lint-common <!nocheck>, ros-humble-tinyxml2-vendor, ros-humble-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-humble-turtle-nest
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, black, libqt5core5a, libqt5gui5, libqt5opengl5, libqt5svg5-dev, libqt5widgets5, pybind11-dev, python3-dev, ros-humble-tinyxml2-vendor, ros-humble-ros-workspace
+Description: ROS 2 Package Creator
