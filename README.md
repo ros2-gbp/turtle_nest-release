@@ -1,3 +1,26 @@
+## turtle_nest (jazzy) - 1.2.1-1
+
+The packages in the `turtle_nest` repository were released into the `jazzy` distro by running `/usr/bin/bloom-release --rosdistro jazzy turtle_nest` on `Fri, 10 Oct 2025 13:50:35 -0000`
+
+The `turtle_nest` package was released.
+
+Version of package(s) in repository `turtle_nest`:
+
+- upstream repository: https://github.com/Jannkar/turtle_nest.git
+- release repository: https://github.com/ros2-gbp/turtle_nest-release.git
+- rosdistro version: `1.2.0-1`
+- old version: `1.2.0-1`
+- new version: `1.2.1-1`
+
+Versions of tools used:
+
+- bloom version: `0.13.0`
+- catkin_pkg version: `1.0.0`
+- rosdep version: `0.26.0`
+- rosdistro version: `1.0.1`
+- vcstools version: `0.1.42`
+
+
 ## turtle_nest (kilted) - 1.2.1-1
 
 The packages in the `turtle_nest` repository were released into the `kilted` distro by running `/usr/bin/bloom-release --rosdistro kilted turtle_nest` on `Fri, 10 Oct 2025 13:49:17 -0000`
