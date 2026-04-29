@@ -1,0 +1,12 @@
+Source: ros-lyrical-turtle-nest
+Section: misc
+Priority: optional
+Maintainer: Janne Karttunen <janne.a.karttunen@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), libqt5core5t64, libqt5svg5-dev, libqt5widgets5t64, pybind11-dev, python3-dev, qtbase5-dev, ros-lyrical-ament-cmake, ros-lyrical-ament-lint-auto <!nocheck>, ros-lyrical-ament-lint-common <!nocheck>, ros-lyrical-tinyxml2-vendor, ros-lyrical-ros-workspace
+Homepage: https://index.ros.org/p/turtle_nest/#lyrical
+Standards-Version: 3.9.2
+
+Package: ros-lyrical-turtle-nest
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, black, libqt5core5t64, libqt5gui5t64, libqt5opengl5t64, libqt5svg5-dev, libqt5widgets5t64, pybind11-dev, python3-dev, ros-lyrical-tinyxml2-vendor, ros-lyrical-ros-workspace
+Description: ROS 2 Package Creator
